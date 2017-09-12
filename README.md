@@ -14,7 +14,7 @@ action/reducer combo to assist with paging against a restful data source
     ```js
     {offset: 1, limit: 1, sort: {field: 'name', isAscending: true}, ...fieldFilters}
     ```
-    > `fieldFilters` are optional, but can contain resource specific filters like `{lastName: 'smith'}`
+    > `fieldFilters` (arbitrary name, just illustrating with [spread operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_operator#Spread_in_object_literals) above) are optional, but can contain resource specific filters like `{lastName: 'smith'}`
     - output:
     ```js
     {data: [{}], total: 1, query: {/* just returns input argument */}}
@@ -38,6 +38,6 @@ action/reducer combo to assist with paging against a restful data source
       actions: {
         //...
       },
-      reducer: function() {//...}
+      reducer: function() {/* */}
     }
     ```
