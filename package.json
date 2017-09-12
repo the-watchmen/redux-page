@@ -1,7 +1,7 @@
 {
   "name": "redux-page",
   "version": "1.0.4",
-  "main": "index.js",
+  "main": "dist/index.js",
   "author": "tony <anthony.kerz@gmail.com>",
   "license": "MIT",
   "scripts": {
@@ -33,9 +33,6 @@
   },
   "ava": {
     "babel": "inherit",
-    "require": [
-      "babel-register",
-      "babel-polyfill"
-    ]
+    "require": ["babel-register", "babel-polyfill"]
   }
 }
