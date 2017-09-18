@@ -7,15 +7,19 @@ import {handle} from 'redux-pack'
 // argument: {offset: 1, limit: 1, sort: {field: 'name', isAscending: true}}
 // returns: {data: [{}], total: 1, query: {/* just returns input argument */}}
 //
-export default function({resource, index, limit = 10}) {
+export default function({resource, index, limit = 10, onFailure}) {
   const dbg = debug(`lib:shared:page:${resource}`)
 
   const INDEX = `${resource}-page/index`
   const MORE = `${resource}-page/more`
 
-  function get({query, dispatch, scroll}) {
+  async function get({query, dispatch, scroll}) {
     dbg('get: query=%o, scroll=%o', query, scroll)
-    dispatch({type: scroll ? MORE : INDEX, promise: index(query)})
+    const result = await dispatch({type: scroll ? MORE : INDEX, promise: index(query)})
+    dbg('get: result=%o', result)
+    if (result.error) {
+      dispatch(onFailure(result.payload.message))
+    }
   }
 
   return {
