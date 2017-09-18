@@ -23,13 +23,14 @@ action/reducer combo to assist with paging against a restful data source
 - obtain an instance of redux-page like below
     ```js
     import config from 'config'
-    import getRedux from '../shared/page-redux'
-    import {getIndex} from '../shared/feathers-data'
+    import getRedux from 'redux-page'
+    import {feathers} from 'web-helpr'
+    import {openSnackbar} from '../layout/layout-redux'
 
     const url = config.api.url
     const resource = 'people'
-    const index = getIndex({url, resource})
-    export default getRedux({resource: 'people', index, limit: 3})
+    const index = feathers.getIndex({url, resource})
+    export default getRedux({resource: 'people', index, limit: 3, onFailure: openSnackbar})
     ```
 
 - redux-page instance will be an object like below which can be used as in typical redux fashion:
