@@ -105,7 +105,7 @@ export default function({resource, index, limit = 10, onFailure}) {
       onClear: () => {
         dbg('action: on-clear')
         return dispatch => {
-          dispatch(clear)
+          dispatch(clear())
         }
       }
     },
@@ -155,8 +155,14 @@ export default function({resource, index, limit = 10, onFailure}) {
           })
         },
 
-        [CLEAR]: () => init
+        [CLEAR]: (state, action) => {
+          dbg('reducer: clear: state=%o, action=%o', state, action)
+          return {
+            ...init
+          }
+        }
       },
+
       init
     )
   }
