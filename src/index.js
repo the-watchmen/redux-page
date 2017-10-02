@@ -100,13 +100,13 @@ export default function({resource, index, limit = 10, onFailure}) {
             scroll: true
           })
         }
-      }
-    },
+      },
 
-    onClear: () => {
-      dbg('action: on-clear')
-      return dispatch => {
-        dispatch(clear)
+      onClear: () => {
+        dbg('action: on-clear')
+        return dispatch => {
+          dispatch(clear)
+        }
       }
     },
 
