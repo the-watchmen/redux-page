@@ -1,6 +1,6 @@
 {
-  "name": "redux-page",
-  "version": "1.1.0",
+  "name": "@watchmen/redux-page",
+  "version": "1.1.1",
   "main": "dist/index.js",
   "author": "tony <anthony.kerz@gmail.com>",
   "license": "MIT",
@@ -37,5 +37,8 @@
       "babel-register",
       "babel-polyfill"
     ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
