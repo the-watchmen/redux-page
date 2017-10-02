@@ -1,6 +1,6 @@
 import debug from 'debug'
 import _ from 'lodash'
-import {handleActions} from 'redux-actions'
+import {createAction, handleActions} from 'redux-actions'
 import {handle} from 'redux-pack'
 
 // index must return a promise that adheres to the contract:
@@ -12,6 +12,23 @@ export default function({resource, index, limit = 10, onFailure}) {
 
   const INDEX = `${resource}-page/index`
   const MORE = `${resource}-page/more`
+  const CLEAR = `${resource}-page/clear`
+
+  const clear = createAction(CLEAR)
+
+  const init = {
+    query: {
+      limit,
+      offset: 0,
+      sort: {field: null, isAscending: true}
+    },
+    data: null,
+    total: 0,
+    active: false,
+    more: true,
+    currentPage: 0,
+    totalPages: 0
+  }
 
   async function get({query, dispatch, scroll}) {
     dbg('get: query=%o, scroll=%o', query, scroll)
@@ -86,6 +103,13 @@ export default function({resource, index, limit = 10, onFailure}) {
       }
     },
 
+    onClear: () => {
+      dbg('action: on-clear')
+      return dispatch => {
+        dispatch(clear)
+      }
+    },
+
     reducer: handleActions(
       {
         [INDEX]: (state, action) => {
@@ -129,21 +153,11 @@ export default function({resource, index, limit = 10, onFailure}) {
               }
             }
           })
-        }
-      },
-      {
-        query: {
-          limit,
-          offset: 0,
-          sort: {field: null, isAscending: true}
         },
-        data: null,
-        total: 0,
-        active: 0,
-        more: true,
-        currentPage: 0,
-        totalPages: 0
-      }
+
+        [CLEAR]: () => init
+      },
+      init
     )
   }
 }
