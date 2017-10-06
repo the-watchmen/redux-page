@@ -3,16 +3,23 @@ import _ from 'lodash'
 import {createAction, handleActions} from 'redux-actions'
 import {handle} from 'redux-pack'
 
-// index must return a promise that adheres to the contract:
+// actions.index must return a promise that adheres to the contract:
 // argument: {offset: 1, limit: 1, sort: {field: 'name', isAscending: true}}
 // returns: {data: [{}], total: 1, query: {/* just returns input argument */}}
 //
-export default function({resource, index, limit = 10, onFailure}) {
-  const dbg = debug(`lib:shared:page:${resource}`)
+// onSuccess/onFailure are functions which will receive {dispatch, result}
+export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
+  const dbg = debug(`lib:redux-page[${resource}]`)
 
-  const INDEX = `${resource}-page/index`
-  const MORE = `${resource}-page/more`
-  const CLEAR = `${resource}-page/clear`
+  const INDEX = `page[${resource}]/index`
+  const MORE = `page[${resource}]/more`
+  const CLEAR = `page[${resource}]/clear`
+
+  const GET = `page[${resource}]/get`
+  const CREATE = `page[${resource}]/create`
+  const UPDATE = `page[${resource}]/update`
+  const PATCH = `page[${resource}]/patch`
+  const DELETE = `page[${resource}]/delete`
 
   const clear = createAction(CLEAR)
 
@@ -27,15 +34,52 @@ export default function({resource, index, limit = 10, onFailure}) {
     active: false,
     more: true,
     currentPage: 0,
-    totalPages: 0
+    totalPages: 0,
+    item: null
   }
 
   async function get({query, dispatch, scroll}) {
     dbg('get: query=%o, scroll=%o', query, scroll)
-    const result = await dispatch({type: scroll ? MORE : INDEX, promise: index(query)})
+    const result = await dispatch({type: scroll ? MORE : INDEX, promise: actions.index({query})})
     dbg('get: result=%o', result)
     if (result.error) {
-      dispatch(onFailure(result.payload.message))
+      onFailure({dispatch, result})
+    }
+  }
+
+  function onWrite({type, promise}) {
+    return dispatch => {
+      dispatch({
+        type,
+        promise,
+        meta: {
+          onSuccess: result => {
+            dbg('on-write: success: result=%o', result)
+            onSuccess({dispatch, result})
+          },
+          onFailure: result => {
+            dbg('on-write: failure: result=%o', result)
+            onFailure({dispatch, result})
+          }
+        }
+      })
+    }
+  }
+
+  function getWriteReducer({type}) {
+    return (state, action) => {
+      dbg('reducer: type=%o, state=%o, action=%o', type, state, action)
+
+      return handle(state, action, {
+        start: () => ({
+          ...state,
+          active: true
+        }),
+        finish: () => ({
+          ...state,
+          active: false
+        })
+      })
     }
   }
 
@@ -107,6 +151,47 @@ export default function({resource, index, limit = 10, onFailure}) {
         return dispatch => {
           dispatch(clear())
         }
+      },
+
+      onCreate: ({data}) => {
+        dbg('action: on-create: data=%o', data)
+        return onWrite({type: CREATE, promise: actions.create({data})})
+      },
+
+      onUpdate: ({id, data}) => {
+        dbg('action: on-update: id=%o, data=%o', id, data)
+        return onWrite({type: UPDATE, promise: actions.update({id, data})})
+      },
+
+      onPatch: ({id, data}) => {
+        dbg('action: on-patch: id=%o, data=%o', id, data)
+        return onWrite({type: PATCH, promise: actions.patch({id, data})})
+      },
+
+      onDelete: ({id}) => {
+        dbg('action: on-delete: id=%o', id)
+        return onWrite({type: DELETE, promise: actions.delete({id})})
+      },
+
+      onGet: ({id}) => {
+        dbg('action: on-get: id=%o', id)
+        return dispatch => {
+          dbg('action: on-get: thunk: id=%o', id)
+          dispatch({
+            type: GET,
+            promise: actions.get({id}),
+            meta: {
+              onSuccess: result => {
+                dbg('on-get: success: result=%o', result)
+                onSuccess({dispatch, result})
+              },
+              onFailure: result => {
+                dbg('on-get: failure: result=%o', result)
+                onFailure({dispatch, result})
+              }
+            }
+          })
+        }
       }
     },
 
@@ -160,6 +245,32 @@ export default function({resource, index, limit = 10, onFailure}) {
           return {
             ...init
           }
+        },
+
+        [CREATE]: getWriteReducer({type: CREATE}),
+        [UPDATE]: getWriteReducer({type: UPDATE}),
+        [PATCH]: getWriteReducer({type: PATCH}),
+        [DELETE]: getWriteReducer({type: DELETE}),
+
+        [GET]: (state, action) => {
+          dbg('reducer: get: state=%o, action=%o', state, action)
+
+          return handle(state, action, {
+            start: () => ({
+              ...state,
+              active: true
+            }),
+            success: () => ({
+              ...state,
+              item: action.payload,
+              active: false
+            }),
+            failure: () => ({
+              ...state,
+              error: action.payload,
+              active: false
+            })
+          })
         }
       },
 
