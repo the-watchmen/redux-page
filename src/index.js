@@ -14,6 +14,7 @@ export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
   const INDEX = `page[${resource}]/index`
   const MORE = `page[${resource}]/more`
   const CLEAR = `page[${resource}]/clear`
+  const CLEAR_ITEM = `page[${resource}]/clear-item`
 
   const GET = `page[${resource}]/get`
   const CREATE = `page[${resource}]/create`
@@ -22,6 +23,7 @@ export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
   const DELETE = `page[${resource}]/delete`
 
   const clear = createAction(CLEAR)
+  const clearItem = createAction(CLEAR_ITEM)
 
   const init = {
     query: {
@@ -47,7 +49,7 @@ export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
     }
   }
 
-  function onWrite({type, promise}) {
+  function handleWrite({type, promise}) {
     return dispatch => {
       dispatch({
         type,
@@ -85,8 +87,8 @@ export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
 
   return {
     actions: {
-      onFilter: filter => {
-        dbg('action: on-filter: filter=%o', filter)
+      handleFilter: filter => {
+        dbg('action: handle-filter: filter=%o', filter)
         return (dispatch, getState) => {
           filter = _.omit(filter, s => {
             return _.isEmpty(_.trim(s))
@@ -102,8 +104,16 @@ export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
         }
       },
 
-      onSort: ({field, isAscending}) => {
-        dbg('action: on-sort: field=%o, is-ascending=%o', field, isAscending)
+      handleRefresh: () => {
+        dbg('action: handle-refresh')
+        return (dispatch, getState) => {
+          const query = _.get(getState(), `${resource}.query`)
+          get({query, dispatch})
+        }
+      },
+
+      handleSort: ({field, isAscending}) => {
+        dbg('action: handle-sort: field=%o, is-ascending=%o', field, isAscending)
         return (dispatch, getState) => {
           const {query} = _.get(getState(), resource)
           get({
@@ -117,8 +127,8 @@ export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
         }
       },
 
-      onPage: index => {
-        dbg('action: on-page: page=%o', index)
+      handlePage: index => {
+        dbg('action: handle-page: page=%o', index)
         return (dispatch, getState) => {
           const {query} = _.get(getState(), resource)
           get({
@@ -131,8 +141,8 @@ export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
         }
       },
 
-      onMore: () => {
-        dbg('action: on-more')
+      handleMore: () => {
+        dbg('action: handle-more')
         return (dispatch, getState) => {
           const {query} = _.get(getState(), resource)
           get({
@@ -146,47 +156,54 @@ export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
         }
       },
 
-      onClear: () => {
-        dbg('action: on-clear')
+      handleClear: () => {
+        dbg('action: handle-clear')
         return dispatch => {
           dispatch(clear())
         }
       },
 
-      onCreate: ({data}) => {
-        dbg('action: on-create: data=%o', data)
-        return onWrite({type: CREATE, promise: actions.create({data})})
-      },
-
-      onUpdate: ({id, data}) => {
-        dbg('action: on-update: id=%o, data=%o', id, data)
-        return onWrite({type: UPDATE, promise: actions.update({id, data})})
-      },
-
-      onPatch: ({id, data}) => {
-        dbg('action: on-patch: id=%o, data=%o', id, data)
-        return onWrite({type: PATCH, promise: actions.patch({id, data})})
-      },
-
-      onDelete: ({id}) => {
-        dbg('action: on-delete: id=%o', id)
-        return onWrite({type: DELETE, promise: actions.delete({id})})
-      },
-
-      onGet: ({id}) => {
-        dbg('action: on-get: id=%o', id)
+      handleClearItem: () => {
+        dbg('action: handle-clear-item')
         return dispatch => {
-          dbg('action: on-get: thunk: id=%o', id)
+          dispatch(clearItem())
+        }
+      },
+
+      handleCreate: ({data}) => {
+        dbg('action: handle-create: data=%o', data)
+        return handleWrite({type: CREATE, promise: actions.create({data})})
+      },
+
+      handleUpdate: ({id, data}) => {
+        dbg('action: handle-update: id=%o, data=%o', id, data)
+        return handleWrite({type: UPDATE, promise: actions.update({id, data})})
+      },
+
+      handlePatch: ({id, data}) => {
+        dbg('action: handle-patch: id=%o, data=%o', id, data)
+        return handleWrite({type: PATCH, promise: actions.patch({id, data})})
+      },
+
+      handleDelete: ({id}) => {
+        dbg('action: handle-delete: id=%o', id)
+        return handleWrite({type: DELETE, promise: actions.delete({id})})
+      },
+
+      handleGet: ({id}) => {
+        dbg('action: handle-get: id=%o', id)
+        return dispatch => {
+          dbg('action: handle-get: thunk: id=%o', id)
           dispatch({
             type: GET,
             promise: actions.get({id}),
             meta: {
               onSuccess: result => {
-                dbg('on-get: success: result=%o', result)
+                dbg('handle-get: success: result=%o', result)
                 onSuccess({dispatch, result})
               },
               onFailure: result => {
-                dbg('on-get: failure: result=%o', result)
+                dbg('handle-get: failure: result=%o', result)
                 onFailure({dispatch, result})
               }
             }
@@ -244,6 +261,14 @@ export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
           dbg('reducer: clear: state=%o, action=%o', state, action)
           return {
             ...init
+          }
+        },
+
+        [CLEAR_ITEM]: (state, action) => {
+          dbg('reducer: clear-item: state=%o, action=%o', state, action)
+          return {
+            ...state,
+            item: null
           }
         },
 
