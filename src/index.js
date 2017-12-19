@@ -8,7 +8,7 @@ import {handle} from 'redux-pack'
 // returns: {data: [{}], total: 1, query: {/* just returns input argument */}}
 //
 // onSuccess/onFailure are functions which will receive {dispatch, result}
-export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
+export default function({resource, actions, limit = 10, onSuccess, onFailure, includeCount}) {
   const dbg = debug(`lib:redux-page[${resource}]`)
 
   const INDEX = `page[${resource}]/index`
@@ -29,7 +29,8 @@ export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
     query: {
       limit,
       offset: 0,
-      sort: {field: null, isAscending: true}
+      sort: {field: null, isAscending: true},
+      includeCount
     },
     data: null,
     total: 0,
@@ -98,7 +99,8 @@ export default function({resource, actions, limit = 10, onSuccess, onFailure}) {
             ...filter,
             sort: _.get(filter, 'sort') || sort,
             offset: 0,
-            limit
+            limit,
+            includeCount
           }
           get({query, dispatch})
         }

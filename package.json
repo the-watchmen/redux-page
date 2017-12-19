@@ -1,6 +1,6 @@
 {
   "name": "@watchmen/redux-page",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "main": "dist/index.js",
   "author": "tony <anthony.kerz@gmail.com>",
   "license": "MIT",
@@ -24,8 +24,8 @@
     "babel-preset-stage-0": "^6.24.1",
     "cross-env": "^5.1.1",
     "eslint-config-prettier": "^2.9.0",
-    "eslint-plugin-prettier": "^2.3.1",
-    "prettier": "^1.9.1",
+    "eslint-plugin-prettier": "^2.4.0",
+    "prettier": "^1.9.2",
     "xo": "^0.18.2"
   },
   "xo": {
